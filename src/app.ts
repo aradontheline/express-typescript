@@ -1,10 +1,12 @@
 import express from 'express';
+import moment from 'moment';
 //import bodyParser from 'body-parser'
 import { Subject } from 'rxjs';
 
 
 var parser = require('body-parser');
 var path = require('path');
+
 const cors = require('cors');
 const request = require('request');
 const chalk = require('chalk');
@@ -55,37 +57,24 @@ app.get('/', async (req, res) => {
 
 
 app.get('/i', (req, res) => {
-
+    let time = moment().format("MMM Do YY")
     res.render('info', {
         title: 'Info',
-        text: 'This is info',
-        time: '4:20'
+        text: 'This a Text',
+        time: time
     })
 })
 
-app.get('/c', (req, res) => {
+const sockets: any[] = []
 
-    // Combine styled and normal strings
-    log(chalk.blue('Hello') + ' World' + chalk.red('!'));
-
-    // Compose multiple styles using the chainable API
-    log(chalk.blue.bgRed.bold('Hello world!'));
-
-    // Pass in multiple arguments
-    log(chalk.blue('Hello', 'World!', 'Foo', 'bar', 'biz', 'baz'));
-
-    // Nest styles
-    log(chalk.red('Hello', chalk.underline.bgBlue('world') + '!'));
-
-    // Nest styles of the same type even (color, underline, background)
-    log(chalk.green(
-        'I am a green line ' +
-        chalk.blue.underline.bold('with a blue substring') +
-        ' that becomes green again!'
-    ));
-
-    res.send('Chalk')
-})
+const sendLog = async (socket) => {
+    while (sockets.includes(socket.id)) {
+        console.log('sending log')
+        let time = moment().format("MMM Do YY hh:mm:ss")
+        logSubject.next({ socket, time })
+        await wait(1)
+    }
+}
 
 const server = require('http').createServer(app);
 
@@ -94,32 +83,42 @@ const io = require('socket.io')(server, options);
 
 io.on('connect', socket => {
 
-    logSubject.subscribe({
-        next: (v) => socket.send(v)
-    });
-    // logSubject.subscribe({
-    //     next: (v) => socket.send(`observerB: ${v}`)
-    // });
+    sockets.push(socket.id)
 
-    logSubject.next(socket.id);
-    logSubject.next(2);
+    logSubject.subscribe((v) => {
+        // console.log(v)
+        if(socket == v.socket){
+            socket.send({time:v.time,Id:socket.id})
+        }
+    });
+
+    logSubject.next({ socketId: socket.id });
+
+    sendLog(socket)
 
     // either with send()
-    socket.send('Hello!');
+    socket.send('Welcome!');
 
     // or with emit() and custom event names
-    socket.emit('greetings', 'Hey!', { 'ms': 'jane' }, Buffer.from([4, 3, 3, 1]));
 
     // handle the event sent with socket.send()
     socket.on('message', (data) => {
         console.log(data);
-    });
+        if(data == 'stop'){
+            sockets.splice(sockets.findIndex(s=>s==socket.id),1) 
+        }
+        if(data == 'start'){
+            sockets.push(socket.id)
+            sendLog(socket)
+        }
+    }); 
 
-    // handle the event sent with socket.emit()
-    socket.on('salutations', (elem1, elem2, elem3) => {
-        console.log(elem1, elem2, elem3);
-    });
+    socket.on('stop',(data)=>{
+        console.log('stopping')
+        sockets.splice(sockets.findIndex(s=>s==socket.id),1)
+    })
 });
+
 
 server.listen(PORT, () => {
     console.log(`Listening on localhost:${PORT}.`)

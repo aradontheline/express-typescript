@@ -5,9 +5,24 @@
   <title><%= title %></title>
   <link rel='stylesheet' href='/stylesheets/style.css' />
   <script src="/socket.io/socket.io.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+
+  <style>
+    pre {
+      width: 300px;
+      height: 300px;
+      overflow: scroll;
+      background: black;
+      color: white;
+    }
+  </style>
 </head>
 
 <body>
+  <button onclick="start()">start</button>
+  <button onclick="stop()">Stop</button>
+
   <h1>message : <%= text %></h1>
   <h1>time : <%= time %></h1>
   <pre id="logs" class="logs"></pre>
@@ -32,14 +47,27 @@
     socket.on('message', data => {
       // console.log('Sadeq you have a message');
       console.log(data);
-      texts = texts +'\n'+ JSON.stringify(data,undefined,2)
-      logs.innerText = texts 
+      texts = texts + '\n' + JSON.stringify(data, undefined, 2)
+      logs.innerText = texts
+      scrollDown()
     });
 
     // handle the event sent with socket.emit()
     socket.on('greetings', (elem1, elem2, elem3) => {
       console.log(elem1, elem2, elem3);
     });
+
+    function stop() {
+      socket.send('stop')
+    }
+    function start() {
+      socket.send('start')
+    }
+    function scrollDown() {
+      $(document).ready(function () {
+        $("pre").animate({ scrollTop: $('pre').prop("scrollHeight") }, 1000);
+      });
+    }
   </script>
 </body>
 
