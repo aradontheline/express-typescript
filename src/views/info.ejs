@@ -57,7 +57,12 @@
       font-family: 'VT323', serif;
       background-color: black;
       line-height: 18rem;
-      text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #ffc107, 0 0 40px #ffc107, 0 0 50px #ffc107, 0 0 60px #e60073, 0 0 70px #e60073;    }
+      text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #ffc107, 0 0 40px #ffc107, 0 0 50px #ffc107, 0 0 60px #e60073, 0 0 70px #e60073;
+    }
+
+    video{
+      height: 400px;
+    }
   </style>
 </head>
 
@@ -65,6 +70,11 @@
 
   <div class="container">
     <div class="card">
+      
+      <video id="videoPlayer" controls>
+        <source src="http://localhost:11000/video" type="video/mp4">
+      </video>
+
       <button type="button" class="btn btn-primary" onclick="start()">start</button>
       <button type="button" class="btn btn-primary" onclick="stop()">Stop</button>
 

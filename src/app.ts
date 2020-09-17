@@ -6,6 +6,9 @@ import { Subject } from 'rxjs';
 
 var parser = require('body-parser');
 var path = require('path');
+var fs = require("fs");
+const stream = require('stream');
+
 
 const cors = require('cors');
 const request = require('request');
@@ -72,10 +75,42 @@ const sendLog = async (socket) => {
         console.log('sending log')
         let time = moment().format("MMM Do YY hh:mm:ss")
         let s = moment().format('ss')
-        logSubject.next({ socket, time,s })
+        logSubject.next({ socket, time, s })
         await wait(1)
     }
 }
+
+app.get('/video', function (req, res) {
+    const path = 'assets/pigeon.mp4'
+    const stat = fs.statSync(path)
+    const fileSize = stat.size
+    const range = req.headers.range
+    if (range) {
+        const parts = range.replace(/bytes=/, "").split("-")
+        const start = parseInt(parts[0], 10)
+        const end = parts[1]
+            ? parseInt(parts[1], 10)
+            : fileSize - 1
+        const chunksize = (end - start) + 1
+        const file = fs.createReadStream(path, { start, end })
+        const head = {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunksize,
+            'Content-Type': 'video/mp4',
+        }
+        res.writeHead(206, head);
+        file.pipe(res);
+    } else {
+        const head = {
+            'Content-Length': fileSize,
+            'Content-Type': 'video/mp4',
+        }
+        res.writeHead(200, head)
+        fs.createReadStream(path).pipe(res)
+    }
+
+});
 
 const server = require('http').createServer(app);
 
@@ -88,8 +123,8 @@ io.on('connect', socket => {
 
     logSubject.subscribe((v) => {
         // console.log(v)
-        if(socket == v.socket){
-            socket.send({time:v.time,Id:socket.id,s:v.s})
+        if (socket == v.socket) {
+            socket.send({ time: v.time, Id: socket.id, s: v.s })
         }
     });
 
@@ -105,18 +140,18 @@ io.on('connect', socket => {
     // handle the event sent with socket.send()
     socket.on('message', (data) => {
         console.log(data);
-        if(data == 'stop'){
-            sockets.splice(sockets.findIndex(s=>s==socket.id),1) 
+        if (data == 'stop') {
+            sockets.splice(sockets.findIndex(s => s == socket.id), 1)
         }
-        if(data == 'start'){
+        if (data == 'start') {
             sockets.push(socket.id)
             sendLog(socket)
         }
-    }); 
+    });
 
-    socket.on('stop',(data)=>{
+    socket.on('stop', (data) => {
         console.log('stopping')
-        sockets.splice(sockets.findIndex(s=>s==socket.id),1)
+        sockets.splice(sockets.findIndex(s => s == socket.id), 1)
     })
 });
 
