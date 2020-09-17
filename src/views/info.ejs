@@ -5,8 +5,20 @@
   <title><%= title %></title>
   <link rel='stylesheet' href='/stylesheets/style.css' />
   <script src="/socket.io/socket.io.js"></script>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+  <!-- jQuery library -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
+  <!-- Popper JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+  <!-- Latest compiled JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=VT323">
 
   <style>
     pre {
@@ -15,17 +27,58 @@
       overflow: scroll;
       background: black;
       color: white;
+      padding-left: 10px;
     }
+
+    .card {
+      margin-top: 50px;
+      padding: 20px;
+    }
+
+    button {
+      margin: 10px;
+    }
+
+    .progress {
+      margin: 10px;
+    }
+
+    .row {
+      display: flex;
+      flex-flow: row;
+      align-items: center;
+      /* justify-content: space-evenly; */
+    }
+
+    .second {
+      flex: 1 1 auto;
+      text-align: center;
+      font-size: 20rem;
+      font-family: 'VT323', serif;
+      background-color: black;
+      line-height: 18rem;
+      text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #ffc107, 0 0 40px #ffc107, 0 0 50px #ffc107, 0 0 60px #e60073, 0 0 70px #e60073;    }
   </style>
 </head>
 
 <body>
-  <button onclick="start()">start</button>
-  <button onclick="stop()">Stop</button>
 
-  <h1>message : <%= text %></h1>
-  <h1>time : <%= time %></h1>
-  <pre id="logs" class="logs"></pre>
+  <div class="container">
+    <div class="card">
+      <button type="button" class="btn btn-primary" onclick="start()">start</button>
+      <button type="button" class="btn btn-primary" onclick="stop()">Stop</button>
+
+      <h1><%= text %></h1>
+      <h4>time : <%= time %></h4>
+      <div class="progress">
+        <div id="progressBar" class="progress-bar bg-info" style="width:30%"></div>
+      </div>
+      <div class="row">
+        <pre id="logs" class="logs"></pre>
+        <h1 class="second text-warning"></h1>
+      </div>
+    </div>
+  </div>
 
 
   <script>
@@ -34,9 +87,6 @@
     socket.on('connect', () => {
       // either with send()
       socket.send('Hello!');
-
-      // or with emit() and custom event names
-      socket.emit('salutations', 'Hello!', { 'mr': 'john' }, Uint8Array.from([1, 2, 3, 4]));
     });
 
     // handle the event sent with socket.send()
@@ -44,17 +94,18 @@
 
     let texts = ''
 
+    let count = 0
+
     socket.on('message', data => {
       // console.log('Sadeq you have a message');
-      console.log(data);
+      console.log(data)
+      let s = data.s
+      $(".second").text(`${s}`)
       texts = texts + '\n' + JSON.stringify(data, undefined, 2)
       logs.innerText = texts
       scrollDown()
-    });
-
-    // handle the event sent with socket.emit()
-    socket.on('greetings', (elem1, elem2, elem3) => {
-      console.log(elem1, elem2, elem3);
+      count += 1
+      updateProgress(parseFloat(count / (count + 10) * 100))
     });
 
     function stop() {
@@ -66,6 +117,11 @@
     function scrollDown() {
       $(document).ready(function () {
         $("pre").animate({ scrollTop: $('pre').prop("scrollHeight") }, 1000);
+      });
+    }
+    function updateProgress(p) {
+      $(document).ready(function () {
+        $("#progressBar").attr("style", `width:${p}%`);
       });
     }
   </script>

@@ -60,7 +60,7 @@ app.get('/i', (req, res) => {
     let time = moment().format("MMM Do YY")
     res.render('info', {
         title: 'Info',
-        text: 'This a Text',
+        text: 'Log Page',
         time: time
     })
 })
@@ -71,7 +71,8 @@ const sendLog = async (socket) => {
     while (sockets.includes(socket.id)) {
         console.log('sending log')
         let time = moment().format("MMM Do YY hh:mm:ss")
-        logSubject.next({ socket, time })
+        let s = moment().format('ss')
+        logSubject.next({ socket, time,s })
         await wait(1)
     }
 }
@@ -88,7 +89,7 @@ io.on('connect', socket => {
     logSubject.subscribe((v) => {
         // console.log(v)
         if(socket == v.socket){
-            socket.send({time:v.time,Id:socket.id})
+            socket.send({time:v.time,Id:socket.id,s:v.s})
         }
     });
 
