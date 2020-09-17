@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title><%= title %></title>
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+  <h1>message : <%= text %></h1>
+  <h1>time : <%= time %></h1>
+  <pre id="logs" class="logs"></pre>
+
+
+  <script>
+    const socket = io();
+
+    socket.on('connect', () => {
+      // either with send()
+      socket.send('Hello!');
+
+      // or with emit() and custom event names
+      socket.emit('salutations', 'Hello!', { 'mr': 'john' }, Uint8Array.from([1, 2, 3, 4]));
+    });
+
+    // handle the event sent with socket.send()
+    const logs = document.getElementById('logs')
+
+    let texts = ''
+
+    socket.on('message', data => {
+      // console.log('Sadeq you have a message');
+      console.log(data);
+      texts = texts +'\n'+ JSON.stringify(data,undefined,2)
+      logs.innerText = texts 
+    });
+
+    // handle the event sent with socket.emit()
+    socket.on('greetings', (elem1, elem2, elem3) => {
+      console.log(elem1, elem2, elem3);
+    });
+  </script>
+</body>
+
+</html>
